@@ -1,7 +1,7 @@
 # Tempo tournament setup
 
 Tempo plays Pokémon VGC doubles draft and Red Alert through the official starter.
-Its default `agent.agent:create_agent` loads a fixed game-specific strategy and
+Its explicit `agent.tempo:create_agent` loads a fixed game-specific strategy and
 uses the starter's schema validation, fallback behavior, and match supervisor.
 The strategy documents are in `agent/strategies/`.
 
@@ -37,8 +37,8 @@ dollar cap.
 
 ```sh
 python -m pytest -q
-python -m agent --check-tournament
-python -m agent --match
+python -m agent --check-tournament --agent agent.tempo
+python -m agent --match --agent agent.tempo
 ```
 
 The connection check does not prove gameplay. If organizers permit Testing,
@@ -46,7 +46,7 @@ select **Mine (self-hosted)** and complete one match of each game. Stop the test
 process before launching the tournament runner:
 
 ```sh
-python -m agent --tournament
+python -m agent --tournament --agent agent.tempo
 ```
 
 Register the agent for BOTH tournaments on the dashboard. Run only one copy.
@@ -75,3 +75,5 @@ orders are generated during model outages.
 
 HTTP timeouts are transport safeguards, not hard wall-clock guarantees.
 The implementation and strategies require live testing; unit tests use fakes.
+
+Always include `--agent agent.tempo`: without it, the unchanged upstream placeholder runs and cannot finish Pokémon or Red Alert.

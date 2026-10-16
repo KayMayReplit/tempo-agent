@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from agent.agent import StrategyProvider, TempoAgent
+from agent.tempo import StrategyProvider, TempoAgent
 from examples.llm.providers import ProviderError
 
 
@@ -50,7 +50,7 @@ def test_policy_routing_and_budget(monkeypatch, game, phase, expected):
             self.provider = provider
         def choose_action(self, state, context):
             return self.provider.strategy
-    monkeypatch.setattr("agent.agent.LLMAgent", Delegate)
+    monkeypatch.setattr("agent.tempo.LLMAgent", Delegate)
     agent = TempoAgent(Provider(), clock=lambda: 100)
     text = agent.choose_action(
         SimpleNamespace(raw={"observation": {}}, phase=phase),
@@ -64,7 +64,7 @@ def test_low_bank_reduces_budget_and_cross_game_reuse_is_rejected(monkeypatch):
     class Delegate:
         def __init__(self, *args, **kwargs): pass
         def choose_action(self, *args): return "action"
-    monkeypatch.setattr("agent.agent.LLMAgent", Delegate)
+    monkeypatch.setattr("agent.tempo.LLMAgent", Delegate)
     agent = TempoAgent(Provider(), clock=lambda: 100)
     state = SimpleNamespace(raw={"observation": {"clock": {"bank_seconds_left": 3}}}, phase="moving")
     agent.choose_action(state, SimpleNamespace(game_type="pokemon_vgc_doubles_draft"))
