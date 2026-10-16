@@ -1,9 +1,9 @@
-# Tempo tournament setup
+# Tempo: no-model tournament agent
 
-Tempo plays Pokémon VGC doubles draft and Red Alert through the official starter.
-Its explicit `agent.tempo:create_agent` loads a fixed game-specific strategy and
-uses the starter's schema validation, fallback behavior, and match supervisor.
-The strategy documents are in `agent/strategies/`.
+Tempo runs local, deterministic strategies for Pokémon doubles draft and Red
+Alert. It needs only your Official Agent Key: no OpenAI/Anthropic account, model
+API key, or inference charges. The computer running it still needs to stay awake
+and online; GitHub does not run the agent.
 
 ## Install
 
@@ -19,21 +19,13 @@ pip install -e ".[dev]"
 cp .env.example .env
 ```
 
-On Windows use `.venv\Scripts\activate` to activate the environment.
-Choose **Self-hosted** in the tournament dashboard. Put the Official Agent Key
-and your OpenAI key in the local `.env` using a private editor; never paste
-either into chat, GitHub, screenshots, or logs. Required names:
+On Windows activate with `.venv\Scripts\activate`.
+In a private editor, set `ALTRUAGENT_OFFICIAL_AGENT_KEY` in `.env` and keep
+`ALTRUAGENT_CONTROL_URL=https://api.altruagent-game.com`.
+Never put credentials in chat, commits, screenshots, or logs.
+Choose **Self-hosted** on the dashboard.
 
-- `ALTRUAGENT_CONTROL_URL`: `https://api.altruagent-game.com`
-- `ALTRUAGENT_OFFICIAL_AGENT_KEY`: generated on the tournament dashboard
-- `OPENAI_API_KEY`: your model provider credential
-- `OPENAI_MODEL`: optional, defaults to the starter's `gpt-4o-mini`
-
-Model usage is billed to your provider account, not the AWS tournament allowance.
-Configure a provider-side spending limit. The starter's model-call cap is not a
-dollar cap.
-
-## Verify and run
+## Check and play
 
 ```sh
 python -m pytest -q
@@ -41,39 +33,49 @@ python -m agent --check-tournament --agent agent.tempo
 python -m agent --match --agent agent.tempo
 ```
 
-The connection check does not prove gameplay. If organizers permit Testing,
-select **Mine (self-hosted)** and complete one match of each game. Stop the test
-process before launching the tournament runner:
+If organizers allow Testing, choose **Mine (self-hosted)** on the dashboard.
+Complete a match of each game before competitive play.
+Stop the test runner before starting the tournament runner:
 
 ```sh
 python -m agent --tournament --agent agent.tempo
 ```
 
-Register the agent for BOTH tournaments on the dashboard. Run only one copy.
-Keep the machine powered, awake, and connected throughout the event. A GitHub
-repository stores the code; it does not keep the agent running. A development
-sandbox is not a guaranteed always-on host.
+Register on BOTH tournaments. Keep one runner process active.
+Always include `--agent agent.tempo`: without it the upstream placeholder runs
+and cannot finish either game. The LLM examples remain upstream reference code;
+do not select `examples.llm_agent` for the no-key version.
 
-## Submission and disclosure
+## Implemented strategy and limitations
 
-This branch is an implementation candidate, not an already-approved competitive
-version. With organizer authorization, merge the setup into the default branch
-and submit its full latest commit ID and model/configuration before the approved
-lock. Do not assume a branch commit satisfies the default-branch submission rule.
-Do not change strategy, code, model, or configuration during competitive play.
-Retain the submitted version, configuration, and private audit logs for the
-required preservation period. Do not commit credentials or private match logs.
+Pokémon ranks fixed draft sets by supplied stats and support capabilities,
+chooses a four-Pokémon lineup with type diversity, and scores legal action pairs
+using move power, accuracy, STAB, type effectiveness and some known ability
+immunities. It rejects conflicting switches and avoids accidental ally damage.
+It handles forced replacements and targetless moves. It is a heuristic, not a
+damage simulator: it does not model full speed order, exact damage rolls,
+opponent predictions, or all abilities and status interactions. Missing metadata
+reduces tactical quality. It does not implement the entire Markdown strategy.
 
-The upstream SDK and example LLM adapters handle authentication, assignments,
-structured action validation, and recovery. Tempo injects the selected Markdown
-strategy into each model decision. Model history is not retained between calls;
-the agent uses the current supplied observations and adapter records.
-Pokémon uses a short shared model-attempt budget, further reduced by observed
-clock/bank limits. Red Alert uses a six-second request budget and inherits the
-starter's WAIT/backoff behavior on provider failure; no autonomous emergency
-orders are generated during model outages.
+Red Alert deploys the MCV, builds power/barracks/refinery/factory, places completed
+buildings, restores harvesting, trains affordable units, repairs damaged
+structures, and sends combat groups toward nearby threats or the supplied enemy
+spawn. It uses bounded order batches and cooldowns to avoid rapid duplicate
+commands. It is a baseline macro policy, not an expert RTS player: it does not
+implement full scouting, expansion, technology progression, spatial pathfinding,
+or the entire Markdown strategy. A blocked MCV or crowded base may need policy
+improvements discovered in testing; humans must not intervene during a match
+without organizer authorization.
 
-HTTP timeouts are transport safeguards, not hard wall-clock guarantees.
-The implementation and strategies require live testing; unit tests use fakes.
+Only player observations and authorized map hints are used. Each match gets a
+fresh policy instance. The Markdown files are retained as design references;
+the deterministic agent does not execute them or send them to a model.
 
-Always include `--agent agent.tempo`: without it, the unchanged upstream placeholder runs and cannot finish Pokémon or Red Alert.
+## Submission
+
+The setup PR remains a candidate. With organizer approval, merge it into the
+default branch and submit that branch's full latest commit ID and configuration.
+Do not assume the setup branch alone meets the default-branch submission rule.
+Do not change the code or configuration during competitive play. Preserve
+the submitted version, configuration and private audit records as required by
+the tournament. No live match result is implied by passing unit tests.
