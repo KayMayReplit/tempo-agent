@@ -23,4 +23,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["altruagent*", "agent*"]
+include = ["altruagent*", "agent*", "examples*"]
+
+[tool.setuptools.package-data]
+agent = ["strategies/*.md"]
